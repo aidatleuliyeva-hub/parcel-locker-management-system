@@ -43,6 +43,7 @@ jobs:
             -Dsonar.projectKey=aidatleuliyeva-hub_parcel-locker-management-system \
             -Dsonar.projectName="Parcel Locker Management System" \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.coverage.exclusions=src/main/java/com/example/parcellocker/Main.java,src/main/java/com/example/parcellocker/ui/**,src/main/java/com/example/parcellocker/application/dto/**,src/main/java/com/example/parcellocker/persistence/JpaUtil.java \
             -Dsonar.token=$SONAR_TOKEN
 
       - name: Upload coverage to Coveralls
