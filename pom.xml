@@ -1,0 +1,334 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>parcel-locker-management-system</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>Parcel Locker Management System</name>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+        <hibernate.version>6.4.4.Final</hibernate.version>
+        <h2.version>2.2.224</h2.version>
+        <postgresql.version>42.7.3</postgresql.version>
+
+        <junit.version>5.10.2</junit.version>
+        <assertj.version>3.25.3</assertj.version>
+        <assertj.swing.version>3.17.1</assertj.swing.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
+        <slf4j.simple.version>1.7.36</slf4j.simple.version>
+
+        <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+        <maven.failsafe.plugin.version>3.2.5</maven.failsafe.plugin.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <pitest.version>1.15.8</pitest.version>
+        <pitest.junit5.plugin.version>1.2.1</pitest.junit5.plugin.version>
+        <exec.maven.plugin.version>3.2.0</exec.maven.plugin.version>
+
+        <jacocoArgLine></jacocoArgLine>
+    </properties>
+
+    <dependencies>
+        <!-- JPA API -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>${jakarta.persistence.version}</version>
+        </dependency>
+
+        <!-- Hibernate ORM -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+        </dependency>
+
+        <!-- H2 database for the local desktop app and fast integration tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+        </dependency>
+
+        <!-- PostgreSQL driver for Testcontainers integration tests -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ core assertions -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit 5 support -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers PostgreSQL module -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Simple logger for test output -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.simple.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ Swing for Swing E2E tests -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>${assertj.swing.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Java compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+
+            <!-- Standard test runner: runs *Test classes during mvn test -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>@{jacocoArgLine} --add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Integration test runner: runs *IT classes during mvn verify -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>${maven.failsafe.plugin.version}</version>
+                <configuration>
+                    <argLine>@{jacocoArgLine} --add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JaCoCo coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+
+                <configuration>
+                    <excludes>
+                        <!-- Application bootstrap -->
+                        <exclude>com/example/parcellocker/Main.class</exclude>
+
+                        <!-- Swing UI is verified by AssertJ Swing E2E tests, not by strict line coverage -->
+                        <exclude>com/example/parcellocker/ui/**</exclude>
+
+                        <!-- JPA bootstrap utility for production runtime -->
+                        <exclude>com/example/parcellocker/persistence/JpaUtil.class</exclude>
+
+                        <!-- DTO records contain no business logic -->
+                        <exclude>com/example/parcellocker/application/dto/**</exclude>
+                    </excludes>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>jacocoArgLine</propertyName>
+                            <destFile>${project.build.directory}/jacoco.exec</destFile>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>1.00</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Run the Swing application with mvn exec:java -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec.maven.plugin.version}</version>
+                <configuration>
+                    <mainClass>com.example.parcellocker.Main</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+            Mutation testing is separated from the default verify lifecycle.
+
+            Reason:
+            JaCoCo requires late argLine evaluation with @{jacocoArgLine}.
+            PIT can be sensitive to such argLine values, so mutation testing
+            is executed through a separate Maven profile with a simpler JVM setup.
+        -->
+        <profile>
+            <id>mutation-testing</id>
+
+            <build>
+                <plugins>
+                    <!-- Override Surefire argLine for PIT execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven.surefire.plugin.version}</version>
+                        <configuration combine.self="override">
+                            <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Override Failsafe argLine for PIT execution -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>${maven.failsafe.plugin.version}</version>
+                        <configuration combine.self="override">
+                            <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+
+                    <!-- PIT mutation testing -->
+                    <!-- PIT mutation testing -->
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>1.15.8</version>
+
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>1.2.1</version>
+                            </dependency>
+                        </dependencies>
+
+                        <configuration>
+                            <targetClasses>
+                                <param>com.example.parcellocker.domain.*</param>
+                                <param>com.example.parcellocker.service.*</param>
+                                <param>com.example.parcellocker.application.*</param>
+                                <param>com.example.parcellocker.repository.*</param>
+                            </targetClasses>
+
+                            <targetTests>
+                                <param>com.example.parcellocker.domain.*Test</param>
+                                <param>com.example.parcellocker.service.*Test</param>
+                                <param>com.example.parcellocker.application.*Test</param>
+                                <param>com.example.parcellocker.repository.*Test</param>
+                            </targetTests>
+
+                            <excludedClasses>
+                                <param>com.example.parcellocker.Main</param>
+                                <param>com.example.parcellocker.ui.*</param>
+                                <param>com.example.parcellocker.application.dto.*</param>
+                                <param>com.example.parcellocker.persistence.JpaUtil</param>
+                                <param>com.example.parcellocker.persistence.TransactionManager</param>
+                            </excludedClasses>
+
+                            <excludedTestClasses>
+                                <param>com.example.parcellocker.ui.*</param>
+                                <param>com.example.parcellocker.repository.RepositoryPostgresIT</param>
+                            </excludedTestClasses>
+
+                            <jvmArgs>
+                                <jvmArg>--add-opens=java.base/java.util=ALL-UNNAMED</jvmArg>
+                            </jvmArgs>
+
+                            <outputFormats>
+                                <param>HTML</param>
+                                <param>XML</param>
+                            </outputFormats>
+
+                            <timestampedReports>false</timestampedReports>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
