@@ -27,6 +27,9 @@ jobs:
           java-version: 17
           cache: maven
 
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Build, test, integration test, and coverage
         run: xvfb-run -a mvn -B clean verify
 
@@ -37,12 +40,13 @@ jobs:
           mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=aidatleuliyeva-hub \
-			-Dsonar.projectKey=aidatleuliyeva-hub_parcel-locker-management-system \
+            -Dsonar.projectKey=aidatleuliyeva-hub_parcel-locker-management-system \
             -Dsonar.projectName="Parcel Locker Management System" \
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
             -Dsonar.token=$SONAR_TOKEN
 
       - name: Upload coverage to Coveralls
+        if: always()
         uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,6 +66,7 @@ jobs:
         with:
           name: pit-report
           path: target/pit-reports
+          if-no-files-found: ignore
 
       - name: Upload test reports
         if: always()
